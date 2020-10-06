@@ -1,6 +1,8 @@
 package evaluacion.evaluacion.controller;
 
+import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,9 @@ public class UsuarioController {
                 jwt.setUserName(user);
                 String token = generator.generate(jwt);
                 if (token != null) {
+                    Usuario login = service.devuelve_user(user);
+                    login.setLast_login(new Date());
+                    service.save(login);
                     return new ResponseEntity<>((Collections.singletonMap("token", token)), HttpStatus.OK);
                 } else {
                     return new ResponseEntity<Void>(HttpStatus.UNAUTHORIZED);
@@ -67,47 +72,73 @@ public class UsuarioController {
             return new ResponseEntity<Void>(HttpStatus.UNAUTHORIZED);
         }
         JwtUser jwtUser = validator.validate(bearer.substring(7));
-        String user = jwtUser.getId();
-
-        Integer valor = service.devuelve_user(user).intValue();
-        switch (valor) {
-            case 1:
+        if (jwtUser != null) {
+            String user = jwtUser.getId();
+            if (service.devuelve_user(user) != null) {
                 List<Usuario> usuario = service.listaAll();
                 if (usuario == null) {
                     return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
                 } else {
                     return new ResponseEntity<>(usuario, HttpStatus.OK);
                 }
-            case 0:
-                return new ResponseEntity<Void>(HttpStatus.CONFLICT);
-            default:
-                return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+    }
+
+    @PostMapping("/save_usuario")
+    public ResponseEntity<?> save(@RequestBody Usuario usuario, @RequestHeader(name = "Authorization") String bearer)
+            throws Exception {
+        if (bearer == null) {
+            return new ResponseEntity<Void>(HttpStatus.UNAUTHORIZED);
+        }
+        String email = usuario.getEmail();
+        if(!email.contains("@")){
+            return new ResponseEntity<>((Collections.singletonMap("El correo no es valido", email)), HttpStatus.BAD_REQUEST);
+        }
+        if(!email.contains("@dominio.cl")){
+            return new ResponseEntity<>((Collections.singletonMap("El correo debe ser @dominio.cl", email)), HttpStatus.BAD_REQUEST);
+        }
+        
+        JwtUser jwtUser = validator.validate(bearer.substring(7));
+        if (jwtUser != null) {
+            String user = jwtUser.getId();
+            if (service.devuelve_user(user) != null) {
+                if (service.save(usuario).intValue() == 1) {
+                    return new ResponseEntity<>(usuario, HttpStatus.CREATED);
+                } else {
+                    return new ResponseEntity<>(usuario, HttpStatus.IM_USED);
+                }
+            }
+            return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
     }
 
     @GetMapping("/ver/{id}")
-    public ResponseEntity<?> ver(@PathVariable Long id, @RequestHeader(name = "Authorization") String bearer) throws Exception {
+    public ResponseEntity<?> ver(@PathVariable Long id, @RequestHeader(name = "Authorization") String bearer)
+            throws Exception {
         if (bearer == null) {
             return new ResponseEntity<Void>(HttpStatus.UNAUTHORIZED);
         }
         JwtUser jwtUser = validator.validate(bearer.substring(7));
-        String user = jwtUser.getId();
-
-        Integer valor = service.devuelve_user(user).intValue();
-        switch (valor) {
-            case 1:
-            Usuario usuario = service.findById(id);
+        if (jwtUser != null) {
+            String user = jwtUser.getId();
+            if (service.devuelve_user(user) != null) {
+                Usuario usuario = service.findById(id);
                 if (usuario == null) {
                     return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
                 } else {
                     return new ResponseEntity<>(usuario, HttpStatus.OK);
                 }
-            case 0:
-                return new ResponseEntity<Void>(HttpStatus.CONFLICT);
-            default:
-                return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
     }
-
 }

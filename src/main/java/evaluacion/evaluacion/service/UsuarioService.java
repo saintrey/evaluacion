@@ -27,19 +27,23 @@ public class UsuarioService implements IUsuarioService {
     @Override
     public Long devuelve_acceso(String user, String password) throws Exception {
         Usuario usuario = usuarioDao.devuelve_acceso(user, password);
-        if(usuario != null){
+        if (usuario != null) {
             return (long) 1;
-        }else{
+        } else {
             return (long) 0;
         }
     }
 
     @Override
-    public Long devuelve_user(String user) throws Exception {
-        Usuario usuario = usuarioDao.devuelve_user(user);
-        if(usuario != null){
+    public Usuario devuelve_user(String user) throws Exception {
+        return usuarioDao.devuelve_user(user);
+    }
+
+    @Override
+    public Long save(Usuario usuario) {
+        if (usuarioDao.save(usuario) != null) {
             return (long) 1;
-        }else{
+        } else {
             return (long) 0;
         }
     }

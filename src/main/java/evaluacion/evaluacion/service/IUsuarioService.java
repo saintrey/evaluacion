@@ -10,9 +10,10 @@ public interface IUsuarioService {
 
     public Usuario findById(Long id);
 
+    public Long save(Usuario usuario);
+
     public Long devuelve_acceso(String user, String password) throws Exception;
 
-    public Long devuelve_user(String user) throws Exception;
-
+    public Usuario devuelve_user(String user) throws Exception;
 
 }
